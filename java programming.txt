@@ -1,0 +1,55 @@
+import java.util.HashMap;
+import java.util.Map;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
+public class LinkShortener {
+    private Map<String, String> shortToLongMap;
+    private Map<String, String> longToShortMap;
+
+    public LinkShortener() {
+        shortToLongMap = new HashMap<>();
+        longToShortMap = new HashMap<>();
+    }
+
+    private String generateShortUrl(String longUrl) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] hashBytes = md.digest(longUrl.getBytes());
+            StringBuilder sb = new StringBuilder();
+
+            for (byte b : hashBytes) {
+                sb.append(String.format("%02x", b & 0xff));
+            }
+
+            return sb.toString().substring(0, 6);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Error generating short URL", e);
+        }
+    }
+
+    public String shortenUrl(String longUrl) {
+        if (longToShortMap.containsKey(longUrl)) {
+            return longToShortMap.get(longUrl);
+        }
+
+        String shortUrl = generateShortUrl(longUrl);
+
+        while (shortToLongMap.containsKey(shortUrl)) {
+            shortUrl = generateShortUrl(longUrl);
+        }
+
+        shortToLongMap.put(shortUrl, longUrl);
+        longToShortMap.put(longUrl, shortUrl);
+
+        return shortUrl;
+    }
+
+    public String expandUrl(String shortUrl) {
+        if (shortToLongMap.containsKey(shortUrl)) {
+            return shortToLongMap.get(shortUrl);
+        } else {
+            throw new IllegalArgumentException("Invalid short URL");
+        }
+    }
+}
